@@ -2,14 +2,28 @@ let toggleContainer = null;
 let originalImageSrc = null;
 let isGenerating = false;
 
+chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+  if (message.action === 'injectScript') {
+    console.log('Content script received injectScript message');
+    sendResponse({ status: 'injected' });
+    return true; 
+  }
+});
+
+document.addEventListener('DOMContentLoaded', () => {
+  chrome.runtime.sendMessage({ action: 'contentScriptReady' });
+});
+
 async function initializeExtension() {
+    console.log('Initializing Amazon AI Fashion Try-On extension');
     if (window.location.hostname !== 'www.amazon.co.jp') {
         return;
     }
     
-    if (!isFashionPage()) {
-        return;
-    }
+    // if (!isFashionPage()) {
+    //     console.log('Not a fashion page');
+    //     return;
+    // }
     
     const settings = await chrome.storage.local.get(['apiKey', 'portrait']);
     if (!isValidSettings(settings)) {
@@ -193,17 +207,14 @@ async function generateImageWithGemini(apiKey, portraitBase64, productImageUrl) 
                         }
                     }
                 ]
-            }],
-            generationConfig: {
-                temperature: 0.7,
-                maxOutputTokens: 4096
-            }
+            }]
         };
-        
-        const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`, {
+
+        const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-image-preview:generateContent?key=${apiKey}`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
+                'x-goog-api-key': apiKey
             },
             body: JSON.stringify(requestBody)
         });
@@ -215,11 +226,16 @@ async function generateImageWithGemini(apiKey, portraitBase64, productImageUrl) 
         }
         
         const data = await response.json();
+        console.log("API response:", data);
         
-        if (data.candidates && data.candidates[0] && data.candidates[0].content && data.candidates[0].content.parts) {
+        if (data.candidates && 
+            data.candidates[0] && 
+            data.candidates[0].content && 
+            data.candidates[0].content.parts) {
+            
             const imagePart = data.candidates[0].content.parts.find(part => part.inline_data);
-            if (imagePart && imagePart.inline_data) {
-                return `data:${imagePart.inline_data.mime_type};base64,${imagePart.inline_data.data}`;
+            if (imagePart && imagePart.inline_data && imagePart.inline_data.data) {
+                return `data:${imagePart.inline_data.mime_type || 'image/png'};base64,${imagePart.inline_data.data}`;
             }
         }
         

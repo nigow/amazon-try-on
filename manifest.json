@@ -5,15 +5,16 @@
   "description": "Generate AI images of yourself wearing fashion items from Amazon.co.jp",
   "permissions": [
     "storage",
-    "activeTab"
+    "activeTab",
+    "tabs"
   ],
   "host_permissions": [
-    "https://www.amazon.co.jp/*",
+    "*://*.amazon.co.jp/*",
     "https://generativelanguage.googleapis.com/*"
   ],
   "content_scripts": [
     {
-      "matches": ["https://www.amazon.co.jp/*"],
+      "matches": ["*://*.amazon.co.jp/*"],
       "js": ["content.js"]
     }
   ],
