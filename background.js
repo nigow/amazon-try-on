@@ -44,7 +44,7 @@ chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
       } catch (error) {
         console.log('Error with content script communication:', error);
       }
-    }, 1000); // Increased delay to 1000ms
+    }, 1000);
   }
 });
 
