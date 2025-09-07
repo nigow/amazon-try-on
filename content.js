@@ -2,7 +2,7 @@ let toggleContainer = null;
 let originalImageSrc = null;
 let isGenerating = false;
 
-chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
   if (message.action === 'injectScript') {
     console.log('Content script received injectScript message');
     sendResponse({ status: 'injected' });
@@ -174,7 +174,7 @@ function restoreOriginalImage() {
 }
 
 async function generateImageWithGemini(apiKey, portraitBase64, productImageUrl) {
-    const prompt = `You are an AI fashion assistant. Please generate an image showing the person from the uploaded portrait wearing the clothing item from the product image. Keep everything about the person the same (face, hair, body, background) and only replace their clothing with the fashion item shown in the product image. The clothing should fit naturally on the person's body. Maintain the same pose and setting from the portrait.`;
+    const prompt = `Generate an image showing the person from the first image wearing the clothing item from the second image. Keep the person's face, hair, body posture, and background exactly the same as the first image. Only replace their current clothing with the fashion item from the second product image. The new clothing should fit naturally and realistically on the person's body. Maintain the same lighting, pose, and setting from the original portrait. Generate the final composite image.`;
     
     try {
         const productImageResponse = await fetch(productImageUrl);
@@ -193,7 +193,6 @@ async function generateImageWithGemini(apiKey, portraitBase64, productImageUrl) 
         const requestBody = {
             contents: [{
                 parts: [
-                    { text: prompt },
                     {
                         inline_data: {
                             mime_type: "image/jpeg",
@@ -202,10 +201,11 @@ async function generateImageWithGemini(apiKey, portraitBase64, productImageUrl) 
                     },
                     {
                         inline_data: {
-                            mime_type: "image/jpeg",
+                            mime_type: "image/jpeg", 
                             data: productImageBase64
                         }
-                    }
+                    },
+                    { text: prompt }
                 ]
             }]
         };
@@ -233,9 +233,12 @@ async function generateImageWithGemini(apiKey, portraitBase64, productImageUrl) 
             data.candidates[0].content && 
             data.candidates[0].content.parts) {
             
-            const imagePart = data.candidates[0].content.parts.find(part => part.inline_data);
-            if (imagePart && imagePart.inline_data && imagePart.inline_data.data) {
-                return `data:${imagePart.inline_data.mime_type || 'image/png'};base64,${imagePart.inline_data.data}`;
+            const imagePart = data.candidates[0].content.parts.find(part => part.inlineData || part.inline_data);
+            if (imagePart) {
+                const imageData = imagePart.inlineData || imagePart.inline_data;
+                if (imageData && imageData.data) {
+                    return `data:${imageData.mimeType || imageData.mime_type || 'image/png'};base64,${imageData.data}`;
+                }
             }
         }
         

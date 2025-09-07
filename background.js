@@ -37,7 +37,7 @@ chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
               } else {
                 console.log('Content script injection failed or already injected');
               }
-            }).catch(error => {
+            }).catch(_error => {
               console.log('Content script not ready yet, normal if page just loaded');
             });
         }
