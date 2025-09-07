@@ -1,5 +1,0 @@
-
-{
-  "name": "Amazon AI Fashion Try-On",
-  "description": "An extension to virtually try on clothes from amazon.co.jp using AI. Set your Gemini API key and a self-portrait to generate an image of you wearing items from Amazon's fashion pages."
-}
